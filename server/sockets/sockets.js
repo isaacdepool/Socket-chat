@@ -2,7 +2,7 @@ const {io} = require('../server')
 
 const { Usuarios } = require('../classes/usuarios');
 
-const { crearMensajes, crearMensaje } = require('../utils/utils');
+const { crearMensaje } = require('../utils/utils');
 
 const usuarios = new Usuarios;
 
@@ -23,17 +23,20 @@ io.on('connection', (client) =>{
        let personas = usuarios.agregarPersonas( client.id, usuario.nombre, usuario.sala );
 
        client.broadcast.to(usuario.sala).emit('listaPersonas', usuarios.getPersonasPorSalas(usuario.sala) );
-
+       client.broadcast.to(usuario.sala).emit('crearMensaje', crearMensaje('Admin.', `${usuario.nombre} se unio` ));
+       
         callback(usuarios.getPersonasPorSalas(usuario.sala));
     });
 
-    client.on('crearMensaje', (data) =>{
+    client.on('crearMensaje', (data, callback) =>{
 
         let persona = usuarios.getPersona(client.id);
 
         let mensaje = crearMensaje(persona.nombre, data.mensaje);
 
-        client.broadcast.to(data.sala).emit('crearMensaje', mensaje);
+        client.broadcast.to(persona.sala).emit('crearMensaje', mensaje);
+
+        callback(mensaje);
     });
 
     client.on('disconnect', () => {
